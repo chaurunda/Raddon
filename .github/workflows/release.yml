@@ -19,15 +19,6 @@ jobs:
             target: x86_64-unknown-linux-gnu
             ext: ""
             archive: tar.gz
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            ext: ""
-            archive: zip
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            ext: .exe
-            archive: zip
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
