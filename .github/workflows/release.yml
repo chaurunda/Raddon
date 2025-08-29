@@ -46,7 +46,7 @@ jobs:
       - name: Prepare artifact
         shell: bash
         run: |
-          BIN_NAME="$(basename $(grep -m1 '^name\s*=' Cargo.toml | cut -d'\"' -f2))"
+          BIN_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed 's/.*=\s*"\(.*\)"/\1/')
           TARGET_DIR="target/${{ matrix.target }}/release"
           OUT_DIR="${{ runner.temp }}/dist"
           mkdir -p "$OUT_DIR/$BIN_NAME"
