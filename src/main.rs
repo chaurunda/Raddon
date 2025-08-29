@@ -13,11 +13,11 @@ const PATH: &str = "./file.txt";
 #[command(version, about, long_about = None)]
 
 struct Args {
-    /// Path to your Addon Folder
-    #[arg(short, long, default_value_t = String::from(""))]
-    folder: String,
+    /// Optionnal : Path to your Addon Folder
+    #[arg(short, long)]
+    folder: Option<String>,
 
-    /// install addon from git url
+    /// Optionnal : Install addon from git url (folder must be specified or in file.txt)
     #[arg(short, long)]
     install: Option<String>,
 }
@@ -25,11 +25,11 @@ struct Args {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let folder: String;
-    if args.folder.is_empty() {
+    if args.folder.as_ref().map_or(true, |s| s.is_empty()) {
         folder =
             String::from_utf8(fs::read(PATH).unwrap_or_else(|_| prompt_dir_path().into_bytes()))?;
     } else {
-        folder = args.folder.to_string();
+        folder = args.folder.unwrap();
     }
     fs::write(PATH, folder.as_bytes())?;
     let folders = fs::read_dir(&folder)?;
@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.install {
         Some(url) => {
-            install::install(&url, &args.folder);
+            install::install(&url, &folder);
         }
         None => {}
     }
