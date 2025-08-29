@@ -1,5 +1,8 @@
-use std::{fs, process::Command};
+use std::fs::{self};
 
+mod git;
+mod log;
+use log::{ilog, log, slog, wlog};
 #[derive(Debug)]
 pub struct Addon {
     name: String,
@@ -16,40 +19,20 @@ impl Addon {
         }
     }
     fn update(&self) {
-        Command::new("git")
-            .arg("-C")
-            .arg(&self.file_path)
-            .arg("pull")
-            .status()
-            .expect("failed to execute process");
+        let _ = git::pull(&self.file_path);
     }
 
     fn check_update(&mut self) -> bool {
-        Command::new("git")
-            .arg("-C")
-            .arg(&self.file_path)
-            .arg("fetch");
+        let _ = git::fetch(&self.file_path);
 
-        let last_local_commit = Command::new("git")
-            .arg("-C")
-            .arg(&self.file_path)
-            .arg("rev-parse")
-            .arg("HEAD")
-            .output()
-            .expect("failed to execute process");
-        let last_distant_commit = Command::new("git")
-            .arg("-C")
-            .arg(&self.file_path)
-            .arg("rev-parse")
-            .arg("origin/HEAD")
-            .output()
-            .expect("failed to execute process");
+        let last_local_commit = git::check_local_commit(&self.file_path);
+        let last_distant_commit = git::check_distant_commit(&self.file_path);
 
-        if last_local_commit.stdout != last_distant_commit.stdout {
-            self.should_update = true;
+        self.should_update = if last_local_commit != last_distant_commit {
+            true
         } else {
-            self.should_update = false;
-        }
+            false
+        };
 
         self.should_update
     }
@@ -57,32 +40,34 @@ impl Addon {
 
 pub fn prompt_update(mut addon_list_with_git: Vec<Addon>, prompt_for_update: bool) {
     if prompt_for_update {
-        println!("Some addons have updates available. Do you want to update them? (y/n)");
+        ilog("Some addons have updates available. Do you want to update them? (y/n)");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
         if input.to_lowercase().trim() == "y" {
             for addon in &mut addon_list_with_git {
                 if addon.should_update {
-                    println!("Updating {}...", addon.name);
+                    log(&format!("Updating {}...", addon.name));
                     addon.update();
                 }
             }
-            println!("All addons are up to date.");
+            log("All addons are up to date.");
         } else {
-            println!("No addons were updated.");
+            log("No addons were updated.");
         }
     } else {
-        println!("All addons are up to date.");
+        log("All addons are up to date.");
     }
 }
 
 pub fn should_update_addon(addon_list_with_git: &mut Vec<Addon>, prompt_for_update: &mut bool) {
     for addon in addon_list_with_git {
-        println!("- {} ", addon.name);
         let has_update = addon.check_update();
         if has_update {
-            println!("  ^^^ Update available!");
+            wlog(&format!("- {} has update available", addon.name));
+            addon.should_update = true;
             *prompt_for_update = true;
+        } else {
+            slog(&format!("- {} is up to date", addon.name));
         }
     }
 }
@@ -90,54 +75,39 @@ pub fn should_update_addon(addon_list_with_git: &mut Vec<Addon>, prompt_for_upda
 pub fn get_addon_list(
     folders: fs::ReadDir,
     addon_list_with_git: &mut Vec<Addon>,
-) -> Result<(), std::io::Error> {
-    for folder in folders {
-        match folder {
-            Err(e) => {
-                eprintln!("Error reading folder: {}", e);
-                continue;
-            }
-            Ok(dir) => {
-                if dir.path().is_dir() {
-                    let addon_folder = fs::read_dir(&dir.path())?;
-                    for addon in addon_folder {
-                        match addon {
-                            Err(e) => {
-                                eprintln!("Error reading addon folder: {}", e);
-                                continue;
-                            }
-                            Ok(addon_file) => {
-                                if addon_file.path().is_dir() {
-                                    match addon_file.path() {
-                                        path if path.is_dir() => {
-                                            let file_name =
-                                                path.file_name().unwrap().to_str().unwrap();
+) -> anyhow::Result<()> {
+    let dirs = folders
+        .filter_map(|folder| folder.ok())
+        .filter(|e| e.path().is_dir());
+    for dir in dirs {
+        let addon_folder = fs::read_dir(&dir.path())?;
+        let addon_dirs = addon_folder
+            .filter_map(|f| f.ok())
+            .filter(|e| e.path().is_dir());
+        for addon_dir in addon_dirs {
+            match addon_dir.path() {
+                path if path.is_dir() => {
+                    let file_name = path.file_name().unwrap().to_string_lossy().to_string();
 
-                                            if file_name == ".git" {
-                                                let dir_path = dir.path();
-                                                let addon_dir_name =
-                                                    dir_path.file_name().unwrap().to_str().unwrap();
-                                                let addon = Addon::new(
-                                                    addon_dir_name.to_string(),
-                                                    dir_path.to_str().unwrap().to_string(),
-                                                );
-                                                addon_list_with_git.push(addon);
-                                            }
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                            }
-                        }
+                    if file_name == ".git" {
+                        let dir_path = dir.path();
+                        let addon_dir_name = dir_path.file_name().unwrap().to_str().unwrap();
+                        let addon = Addon::new(
+                            addon_dir_name.to_string(),
+                            dir_path.to_string_lossy().to_string(),
+                        );
+                        addon_list_with_git.push(addon);
                     }
                 }
+                _ => {}
             }
-        };
+        }
     }
-
-    println!("Found {} addons updatable:", addon_list_with_git.len());
-
     Ok(())
+}
+
+pub fn install_addon(url: &str, folder: &str) {
+    let _ = git::clone(url, folder);
 }
 
 #[cfg(test)]
