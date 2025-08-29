@@ -2,6 +2,7 @@ use std::fs::{self};
 
 mod git;
 mod log;
+use dialoguer::{Input, theme::ColorfulTheme};
 use log::{ilog, log, slog, wlog};
 #[derive(Debug)]
 pub struct Addon {
@@ -108,6 +109,15 @@ pub fn get_addon_list(
 
 pub fn install_addon(url: &str, folder: &str) {
     let _ = git::clone(url, folder);
+}
+
+pub fn prompt_dir_path() -> String {
+    let input: String = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("WoW directory path")
+        .interact_text()
+        .unwrap();
+
+    input
 }
 
 #[cfg(test)]

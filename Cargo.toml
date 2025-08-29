@@ -7,3 +7,4 @@ edition = "2024"
 anyhow = "1.0.99"
 clap = { version = "4.5.46", features = ["derive"] }
 console = "0.16.0"
+dialoguer = "0.12.0"
