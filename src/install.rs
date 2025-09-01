@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use raddon::install_addon;
 use wildpath::resolve;
@@ -34,11 +34,13 @@ pub fn install(url: &str, folder: &str) {
     }
 
     let split_toc_file_path = toc_file_path.split("/");
-    let mut toc_file_name = "";
+    let mut toc_file_name = String::new();
 
     for toc_name in split_toc_file_path {
         if toc_name.contains(".toc") {
-            toc_file_name = &toc_name.replace(".toc", "")
+            toc_file_name = toc_name.replace(".toc", "");
         }
     }
+
+    let _ = fs::rename(folder.to_owned() + "/" + repo_name, folder.to_owned() + "/" + &toc_file_name);
 }
