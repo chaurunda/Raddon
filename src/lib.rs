@@ -118,10 +118,10 @@ pub fn install_addon(url: &str, folder: &str) {
 pub fn rename_git_folder(url: &str, folder: &str) {
     let repo_name = get_repo_name(url);
 
-    let toc_file_name = get_toc_file_name(folder, repo_name);
+    let toc_file_name = get_toc_file_name(folder, &repo_name);
 
     let _ = fs::rename(
-        folder.to_owned() + "/" + repo_name,
+        folder.to_owned() + "/" + &repo_name,
         folder.to_owned() + "/" + &toc_file_name,
     );
 }
@@ -149,7 +149,7 @@ fn get_toc_file_name(folder: &str, repo_name: &str) -> String {
     toc_file_name
 }
 
-fn get_repo_name(url: &str) -> &str {
+fn get_repo_name(url: &str) -> String {
     let splitted_url = url.split("/");
 
     let mut repo_with_git = String::new();
@@ -160,8 +160,7 @@ fn get_repo_name(url: &str) -> &str {
         }
     }
 
-    let repo_name = repo_with_git.as_str();
-    repo_name
+    repo_with_git
 }
 
 pub fn rename_after_install() {}
