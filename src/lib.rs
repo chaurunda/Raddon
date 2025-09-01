@@ -163,8 +163,6 @@ fn get_repo_name(url: &str) -> String {
     repo_with_git
 }
 
-pub fn rename_after_install() {}
-
 pub fn prompt_dir_path() -> String {
     let input: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("WoW directory path")
