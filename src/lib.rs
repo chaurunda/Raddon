@@ -1,9 +1,13 @@
-use std::fs::{self};
+use std::{
+    fs::{self},
+    path::Path,
+};
 
 mod git;
 mod log;
 use dialoguer::{Input, theme::ColorfulTheme};
 use log::{ilog, log, slog, wlog};
+use wildpath::resolve;
 #[derive(Debug)]
 pub struct Addon {
     name: String,
@@ -109,6 +113,55 @@ pub fn get_addon_list(
 
 pub fn install_addon(url: &str, folder: &str) {
     let _ = git::clone(url, folder);
+}
+
+pub fn rename_git_folder(url: &str, folder: &str) {
+    let repo_name = get_repo_name(url);
+
+    let toc_file_name = get_toc_file_name(folder, repo_name);
+
+    let _ = fs::rename(
+        folder.to_owned() + "/" + repo_name,
+        folder.to_owned() + "/" + &toc_file_name,
+    );
+}
+
+fn get_toc_file_name(folder: &str, repo_name: &str) -> String {
+    let toc_file_wildcard = resolve(&Path::new(
+        &(folder.to_owned() + "/" + repo_name + "/*.toc"),
+    ));
+
+    let mut toc_file_path = String::new();
+
+    match toc_file_wildcard {
+        Some(file) => toc_file_path = file[0].to_str().unwrap().to_owned(),
+        None => {}
+    }
+
+    let split_toc_file_path = toc_file_path.split("/");
+    let mut toc_file_name = String::new();
+
+    for toc_name in split_toc_file_path {
+        if toc_name.contains(".toc") {
+            toc_file_name = toc_name.replace(".toc", "");
+        }
+    }
+    toc_file_name
+}
+
+fn get_repo_name(url: &str) -> &str {
+    let splitted_url = url.split("/");
+
+    let mut repo_with_git = String::new();
+
+    for surl in splitted_url {
+        if surl.contains(".git") {
+            repo_with_git = surl.replace(".git", "");
+        }
+    }
+
+    let repo_name = repo_with_git.as_str();
+    repo_name
 }
 
 pub fn rename_after_install() {}
