@@ -111,6 +111,8 @@ pub fn install_addon(url: &str, folder: &str) {
     let _ = git::clone(url, folder);
 }
 
+pub fn rename_after_install() {}
+
 pub fn prompt_dir_path() -> String {
     let input: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("WoW directory path")
