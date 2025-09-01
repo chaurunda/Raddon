@@ -8,21 +8,16 @@ pub fn install(url: &str, folder: &str) {
 
     let splitted_url = url.split("/");
 
-    let mut repo_with_git = "";
+    let mut repo_with_git = String::new();
 
     for surl in splitted_url {
         if surl.contains(".git") {
-            repo_with_git = surl;
+            repo_with_git = surl.replace(".git", "");
         }
     }
 
-    let mut repo_name = "";
+    let repo_name = repo_with_git.as_str();
 
-    for name in repo_with_git.split('.') {
-        if name != "git" {
-            repo_name = name;
-        }
-    }
     println!("{}", &repo_name);
     println!("{}", &folder);
     println!("{}", &(folder.to_owned() + "/" + repo_name + "/*.toc"));
@@ -31,10 +26,10 @@ pub fn install(url: &str, folder: &str) {
         &(folder.to_owned() + "/" + repo_name + "/*.toc"),
     ));
 
-    let mut toc_file_path = "";
+    let mut toc_file_path = String::new();
 
     match toc_file_wildcard {
-        Some(file) => toc_file_path = file[0].to_str().unwrap(),
+        Some(file) => toc_file_path = file[0].to_str().unwrap().to_owned(),
         None => {}
     }
 
@@ -43,7 +38,7 @@ pub fn install(url: &str, folder: &str) {
 
     for toc_name in split_toc_file_path {
         if toc_name.contains(".toc") {
-            toc_file_name = toc_name
+            toc_file_name = &toc_name.replace(".toc", "")
         }
     }
 }
