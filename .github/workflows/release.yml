@@ -57,7 +57,7 @@ jobs:
           echo "ARCHIVE_PATH=$OUT_DIR/$ARCHIVE" >> $GITHUB_ENV
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ env.ARCHIVE_PATH }}
         env:
